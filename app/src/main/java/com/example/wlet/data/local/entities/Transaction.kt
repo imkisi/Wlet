@@ -21,6 +21,6 @@ data class Transaction(
     val amount: Double,
     val date: Long,
     val description: String?,
-    val categoryId: Int,
-    val transactionType: String
+    val categoryId: Long?,
+    val transactionType: String // "INCOME" or "EXPENSE"
 )

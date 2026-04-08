@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools" >
 
     <application
+        android:name=".WletApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -11,16 +12,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Wlet" >
-        <activity
-            android:name=".ui.home.home"
-            android:exported="false"
-            android:label="@string/title_activity_home"
-            android:theme="@style/Theme.Wlet" />
-        <activity
-            android:name=".ui.theme.home"
-            android:exported="false"
-            android:label="@string/title_activity_home"
-            android:theme="@style/Theme.Wlet" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
