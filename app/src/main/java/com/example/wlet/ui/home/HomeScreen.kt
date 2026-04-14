@@ -8,41 +8,36 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.navigation.NavController
+import com.example.wlet.R
 import com.example.wlet.data.local.entities.Category
 import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.ui.FinanceViewModel
+import com.example.wlet.ui.theme.WletTheme
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, viewModel: FinanceViewModel) {
+fun HomeScreenContent(viewModel: FinanceViewModel) {
     val transactions by viewModel.allTransactions.collectAsState(initial = emptyList())
     val categories by viewModel.allCategories.collectAsState(initial = emptyList())
 
     val sheetState = rememberModalBottomSheetState()
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var isSheetVisible by remember { mutableStateOf(false) }
-    var isAddDialogOpen by remember { mutableStateOf(false) }
     var isEditDialogOpen by remember { mutableStateOf(false) }
 
     val currentDate = remember {
@@ -53,20 +48,9 @@ fun HomeScreen(navController: NavController, viewModel: FinanceViewModel) {
         SimpleDateFormat("dd MMM", Locale("id", "ID")).format(Date(it.date))
     }
 
-    Scaffold(
-        containerColor = Color(0xFFF5F5F5),
-        floatingActionButton = {
-            FloatingDock(
-                onSettingsClick = { navController.navigate("settings") },
-                onAddClick = { isAddDialogOpen = true }
-            )
-        },
-        floatingActionButtonPosition = FabPosition.Center
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF0ECE9))) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier = Modifier.fillMaxSize()
         ) {
             item {
                 val totalBalance = transactions.sumOf { 
@@ -101,16 +85,18 @@ fun HomeScreen(navController: NavController, viewModel: FinanceViewModel) {
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+            item { Spacer(modifier = Modifier.height(120.dp)) }
         }
 
         if (isSheetVisible) {
             ModalBottomSheet(
                 onDismissRequest = { isSheetVisible = false },
-                sheetState = sheetState
+                sheetState = sheetState,
+                containerColor = Color.White
             ) {
                 EditDeleteSheetContent(
                     transaction = selectedTransaction,
+                    categories = categories,
                     onClose = { isSheetVisible = false },
                     onEdit = { 
                         isSheetVisible = false
@@ -122,27 +108,6 @@ fun HomeScreen(navController: NavController, viewModel: FinanceViewModel) {
                     }
                 )
             }
-        }
-
-        if (isAddDialogOpen) {
-            AddEditTransactionDialog(
-                title = "Tambah Transaksi",
-                categories = categories,
-                onDismiss = { isAddDialogOpen = false },
-                onSave = { name, amount, desc, catId, type ->
-                    viewModel.insert(
-                        Transaction(
-                            name = name,
-                            amount = amount,
-                            date = System.currentTimeMillis(),
-                            description = desc,
-                            categoryId = catId,
-                            transactionType = type
-                        )
-                    )
-                    isAddDialogOpen = false
-                }
-            )
         }
 
         if (isEditDialogOpen && selectedTransaction != null) {
@@ -186,7 +151,7 @@ fun AddEditTransactionDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -194,14 +159,18 @@ fun AddEditTransactionDialog(
                 Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     FilterChip(
                         selected = transactionType == "EXPENSE",
                         onClick = { 
                             transactionType = "EXPENSE"
                             selectedCategoryId = null
                         },
-                        label = { Text("Pengeluaran") }
+                        label = { Text("Pengeluaran") },
+                        modifier = Modifier.weight(1f)
                     )
                     FilterChip(
                         selected = transactionType == "INCOME",
@@ -209,25 +178,32 @@ fun AddEditTransactionDialog(
                             transactionType = "INCOME"
                             selectedCategoryId = null
                         },
-                        label = { Text("Pemasukan") }
+                        label = { Text("Pemasukan") },
+                        modifier = Modifier.weight(1f)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nama") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { if (it.all { char -> char.isDigit() }) amount = it },
                     label = { Text("Nominal") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
@@ -236,10 +212,9 @@ fun AddEditTransactionDialog(
                         readOnly = true,
                         label = { Text("Kategori") },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
                         trailingIcon = {
-                            IconButton(onClick = { expanded = true }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
+                            Icon(painter = painterResource(id = R.drawable.settings), contentDescription = null, modifier = Modifier.size(24.dp))
                         }
                     )
                     Box(modifier = Modifier.matchParentSize().clickable { expanded = true })
@@ -264,12 +239,13 @@ fun AddEditTransactionDialog(
                         }
                     }
                 }
-
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Deskripsi (Opsional)") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -280,10 +256,11 @@ fun AddEditTransactionDialog(
                             onSave(name, amt, description, selectedCategoryId, transactionType)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
                 ) {
-                    Text("Simpan")
+                    Text("Simpan", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -293,7 +270,9 @@ fun AddEditTransactionDialog(
 @Composable
 fun HeaderSection(tanggal: String, totalSaldo: String, onDateClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 80.dp, bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
@@ -309,12 +288,16 @@ fun HeaderSection(tanggal: String, totalSaldo: String, onDateClick: () -> Unit) 
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Text("Saldo Saat Ini", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
         Text(
             text = totalSaldo,
-            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-            color = Color.Black
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified
+            ),
+            color = Color.Black,
+            modifier = Modifier.padding(vertical = 8.dp)
         )
     }
 }
@@ -398,7 +381,7 @@ fun TransactionRow(transaction: Transaction, categoryName: String, onClick: () -
 }
 
 @Composable
-fun FloatingDock(onSettingsClick: () -> Unit, onAddClick: () -> Unit) {
+fun FloatingDock(onSettingsClick: () -> Unit, onHomeClick: () -> Unit, onAddClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(bottom = 16.dp)
@@ -409,11 +392,11 @@ fun FloatingDock(onSettingsClick: () -> Unit, onAddClick: () -> Unit) {
             color = Color.White
         ) {
             Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                IconButton(onClick = { /* Home Action */ }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(28.dp))
+                IconButton(onClick = onHomeClick, modifier = Modifier.size(48.dp)) {
+                    Icon(painter = painterResource(id = R.drawable.home), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Black)
                 }
                 IconButton(onClick = onSettingsClick, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(28.dp))
+                    Icon(painter = painterResource(id = R.drawable.settings), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Black)
                 }
             }
         }
@@ -428,7 +411,7 @@ fun FloatingDock(onSettingsClick: () -> Unit, onAddClick: () -> Unit) {
             elevation = FloatingActionButtonDefaults.elevation(6.dp),
             modifier = Modifier.size(64.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(32.dp))
+            Icon(painter = painterResource(id = R.drawable.add), contentDescription = null, modifier = Modifier.size(32.dp))
         }
     }
 }
@@ -436,51 +419,55 @@ fun FloatingDock(onSettingsClick: () -> Unit, onAddClick: () -> Unit) {
 @Composable
 fun EditDeleteSheetContent(
     transaction: Transaction?, 
+    categories: List<Category>,
     onClose: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val categoryName = categories.find { it.id == transaction?.categoryId }?.name ?: "Tanpa Kategori"
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(24.dp)
     ) {
         Text(
-            text = "Opsi Transaksi",
-            style = MaterialTheme.typography.titleLarge,
+            text = "Rincian Transaksi",
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Transaksi: ${transaction?.name ?: ""}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = "Nominal: ${formatCurrency(transaction?.amount ?: 0.0)}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = "Tipe: ${if (transaction?.transactionType == "INCOME") "Pemasukan" else "Pengeluaran"}", style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        DetailRow(label = "Nama", value = transaction?.name ?: "")
+        DetailRow(label = "Nominal", value = formatCurrency(transaction?.amount ?: 0.0), isAmount = true, type = transaction?.transactionType)
+        DetailRow(label = "Kategori", value = categoryName)
         if (!transaction?.description.isNullOrBlank()) {
-            Text(text = "Deskripsi: ${transaction?.description}", style = MaterialTheme.typography.bodyLarge)
+            DetailRow(label = "Deskripsi", value = transaction?.description ?: "")
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
                 onClick = onEdit,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                modifier = Modifier.weight(1f).height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Edit, contentDescription = null)
+                Icon(painter = painterResource(id = R.drawable.edit), contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Edit")
+                Text("Edit", fontWeight = FontWeight.Bold)
             }
             
             Button(
                 onClick = onDelete,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = null)
+                Icon(painter = painterResource(id = R.drawable.delete), contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Hapus")
+                Text("Hapus", fontWeight = FontWeight.Bold)
             }
         }
         
@@ -488,16 +475,109 @@ fun EditDeleteSheetContent(
         
         OutlinedButton(
             onClick = onClose,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Tutup")
+            Text("Tutup", fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
+@Composable
+fun DetailRow(label: String, value: String, isAmount: Boolean = false, type: String? = null) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+        val color = if (isAmount) {
+            if (type == "INCOME") Color.Blue else Color.Red
+        } else {
+            Color.Black
+        }
+        Text(
+            text = if (isAmount) (if (type == "INCOME") "+" else "-") + value else value,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = color
+        )
+    }
+}
+
 fun formatCurrency(amount: Double): String {
     val format = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+    format.maximumFractionDigits = 0
     return format.format(amount).replace("Rp", "Rp ")
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HeaderSectionPreview() {
+    WletTheme {
+        HeaderSection(
+            tanggal = "Senin, 10 Maret",
+            totalSaldo = "Rp 500.000",
+            onDateClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DailyTransactionCardPreview() {
+    WletTheme {
+        DailyTransactionCard(
+            date = "10 Mar",
+            dailyTransactions = listOf(
+                Transaction(name = "Makan Siang", amount = 50000.0, date = 0L, description = null, categoryId = null, transactionType = "EXPENSE"),
+                Transaction(name = "Gaji", amount = 1000000.0, date = 0L, description = null, categoryId = null, transactionType = "INCOME")
+            ),
+            categories = emptyList(),
+            onItemClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FloatingDockPreview() {
+    WletTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            FloatingDock(onSettingsClick = {}, onHomeClick = {}, onAddClick = {})
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddEditTransactionDialogPreview() {
+    WletTheme {
+        AddEditTransactionDialog(
+            title = "Tambah Transaksi",
+            categories = listOf(
+                Category(id = 1, name = "Makanan", type = "EXPENSE"),
+                Category(id = 2, name = "Transportasi", type = "EXPENSE")
+            ),
+            onDismiss = {},
+            onSave = { _, _, _, _, _ -> }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EditDeleteSheetContentPreview() {
+    WletTheme {
+        EditDeleteSheetContent(
+            transaction = Transaction(
+                name = "Belanja Bulanan",
+                amount = 250000.0,
+                date = System.currentTimeMillis(),
+                description = "Beli kebutuhan dapur",
+                categoryId = 1,
+                transactionType = "EXPENSE"
+            ),
+            categories = listOf(Category(id = 1, name = "Belanja", type = "EXPENSE")),
+            onClose = {},
+            onEdit = {},
+            onDelete = {}
+        )
+    }
 }
