@@ -60,7 +60,7 @@ fun MainContainer(viewModel: FinanceViewModel) {
         ) { page ->
             when (page) {
                 0 -> HomeScreenContent(viewModel)
-                1 -> SettingsScreenContent()
+                1 -> SettingsScreenContent(viewModel)
             }
         }
 
@@ -90,18 +90,21 @@ fun MainContainer(viewModel: FinanceViewModel) {
                 title = "Tambah Transaksi",
                 categories = categories,
                 onDismiss = { isAddDialogOpen = false },
-                onSave = { name, amount, desc, catId, type ->
-                    viewModel.insert(
-                        Transaction(
-                            name = name,
-                            amount = amount,
-                            date = System.currentTimeMillis(),
-                            description = desc,
-                            categoryId = catId,
-                            transactionType = type
+                onSave = { name, amount, desc, categoryName, type ->
+                    coroutineScope.launch {
+                        val categoryId = viewModel.getOrCreateCategory(categoryName, type)
+                        viewModel.insert(
+                            Transaction(
+                                name = name,
+                                amount = amount,
+                                date = System.currentTimeMillis(),
+                                description = desc,
+                                categoryId = categoryId,
+                                transactionType = type
+                            )
                         )
-                    )
-                    isAddDialogOpen = false
+                        isAddDialogOpen = false
+                    }
                 }
             )
         }

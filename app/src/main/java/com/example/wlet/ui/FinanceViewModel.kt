@@ -29,6 +29,15 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
     fun insertCategory(category: Category) = viewModelScope.launch {
         repository.addCategory(category)
     }
+
+    fun deleteCategory(category: Category) = viewModelScope.launch {
+        repository.deleteCategory(category)
+    }
+
+    suspend fun getOrCreateCategory(name: String, type: String): Long {
+        val existing = repository.getCategoryByNameAndType(name, type)
+        return existing?.id ?: repository.addCategory(Category(name = name, type = type))
+    }
 }
 
 class FinanceViewModelFactory(private val repository: FinanceRepository) : ViewModelProvider.Factory {

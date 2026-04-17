@@ -25,6 +25,7 @@ import com.example.wlet.data.local.entities.Category
 import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.ui.FinanceViewModel
 import com.example.wlet.ui.theme.WletTheme
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,6 +40,7 @@ fun HomeScreenContent(viewModel: FinanceViewModel) {
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var isSheetVisible by remember { mutableStateOf(false) }
     var isEditDialogOpen by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val currentDate = remember {
         SimpleDateFormat("EEEE, d MMMM", Locale("id", "ID")).format(Date())
@@ -116,17 +118,20 @@ fun HomeScreenContent(viewModel: FinanceViewModel) {
                 transaction = selectedTransaction,
                 categories = categories,
                 onDismiss = { isEditDialogOpen = false },
-                onSave = { name, amount, desc, catId, type ->
-                    viewModel.update(
-                        selectedTransaction!!.copy(
-                            name = name,
-                            amount = amount,
-                            description = desc,
-                            categoryId = catId,
-                            transactionType = type
+                onSave = { name, amount, desc, categoryName, type ->
+                    coroutineScope.launch {
+                        val categoryId = viewModel.getOrCreateCategory(categoryName, type)
+                        viewModel.update(
+                            selectedTransaction!!.copy(
+                                name = name,
+                                amount = amount,
+                                description = desc,
+                                categoryId = categoryId,
+                                transactionType = type
+                            )
                         )
-                    )
-                    isEditDialogOpen = false
+                        isEditDialogOpen = false
+                    }
                 }
             )
         }
@@ -140,13 +145,17 @@ fun AddEditTransactionDialog(
     transaction: Transaction? = null,
     categories: List<Category>,
     onDismiss: () -> Unit,
-    onSave: (String, Double, String, Long?, String) -> Unit
+    onSave: (String, Double, String, String, String) -> Unit
 ) {
     var name by remember { mutableStateOf(transaction?.name ?: "") }
     var amount by remember { mutableStateOf(transaction?.amount?.toLong()?.toString() ?: "") }
     var description by remember { mutableStateOf(transaction?.description ?: "") }
     var transactionType by remember { mutableStateOf(transaction?.transactionType ?: "EXPENSE") }
-    var selectedCategoryId by remember { mutableStateOf<Long?>(transaction?.categoryId) }
+    
+    // Use the actual category name instead of ID
+    val initialCategoryName = categories.find { it.id == transaction?.categoryId }?.name ?: ""
+    var categoryInput by remember { mutableStateOf(initialCategoryName) }
+    
     var expanded by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -167,7 +176,6 @@ fun AddEditTransactionDialog(
                         selected = transactionType == "EXPENSE",
                         onClick = { 
                             transactionType = "EXPENSE"
-                            selectedCategoryId = null
                         },
                         label = { Text("Pengeluaran") },
                         modifier = Modifier.weight(1f)
@@ -176,7 +184,6 @@ fun AddEditTransactionDialog(
                         selected = transactionType == "INCOME",
                         onClick = { 
                             transactionType = "INCOME"
-                            selectedCategoryId = null
                         },
                         label = { Text("Pemasukan") },
                         modifier = Modifier.weight(1f)
@@ -207,35 +214,34 @@ fun AddEditTransactionDialog(
                 
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
-                        value = categories.find { it.id == selectedCategoryId }?.name ?: "Pilih Kategori",
-                        onValueChange = {},
-                        readOnly = true,
+                        value = categoryInput,
+                        onValueChange = { 
+                            categoryInput = it
+                            expanded = true
+                        },
                         label = { Text("Kategori") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         trailingIcon = {
-                            Icon(painter = painterResource(id = R.drawable.settings), contentDescription = null, modifier = Modifier.size(24.dp))
+                            IconButton(onClick = { expanded = !expanded }) {
+                                Icon(painter = painterResource(id = R.drawable.categories), contentDescription = null, modifier = Modifier.size(24.dp))
+                            }
                         }
                     )
-                    Box(modifier = Modifier.matchParentSize().clickable { expanded = true })
                     
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        val filteredCategories = categories.filter { it.type == transactionType }
-                        if (filteredCategories.isEmpty()) {
+                    DropdownMenu(
+                        expanded = expanded && categories.filter { it.type == transactionType }.isNotEmpty(),
+                        onDismissRequest = { expanded = false },
+                        properties = androidx.compose.ui.window.PopupProperties(focusable = false)
+                    ) {
+                        categories.filter { it.type == transactionType }.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text("Tidak ada kategori") },
-                                onClick = { expanded = false }
+                                text = { Text(category.name) },
+                                onClick = {
+                                    categoryInput = category.name
+                                    expanded = false
+                                }
                             )
-                        } else {
-                            filteredCategories.forEach { category ->
-                                DropdownMenuItem(
-                                    text = { Text(category.name) },
-                                    onClick = {
-                                        selectedCategoryId = category.id
-                                        expanded = false
-                                    }
-                                )
-                            }
                         }
                     }
                 }
@@ -252,8 +258,8 @@ fun AddEditTransactionDialog(
                 Button(
                     onClick = {
                         val amt = amount.toDoubleOrNull() ?: 0.0
-                        if (name.isNotBlank() && amt > 0) {
-                            onSave(name, amt, description, selectedCategoryId, transactionType)
+                        if (name.isNotBlank() && amt > 0 && categoryInput.isNotBlank()) {
+                            onSave(name, amt, description, categoryInput, transactionType)
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(50.dp),

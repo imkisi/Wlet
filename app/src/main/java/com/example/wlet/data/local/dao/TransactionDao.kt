@@ -25,8 +25,14 @@ interface TransactionDao {
     fun getAllTransactions(): Flow<List<Transaction>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCategory(category: Category)
+    suspend fun insertCategory(category: Category): Long
+
+    @Delete
+    suspend fun deleteCategory(category: Category)
 
     @Query("SELECT * FROM categories")
     fun getAllCategories(): Flow<List<Category>>
+
+    @Query("SELECT * FROM categories WHERE name = :name AND type = :type LIMIT 1")
+    suspend fun getCategoryByNameAndType(name: String, type: String): Category?
 }
