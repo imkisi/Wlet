@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.wlet"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.1"
+        versionCode = 2
+        versionName = "2.0.106"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -57,6 +57,8 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.compose.ui.text)
     ksp(libs.androidx.room.compiler)
     
     implementation(libs.androidx.navigation.runtime.ktx)

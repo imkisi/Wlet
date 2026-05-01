@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.ui.FinanceViewModel
 import com.example.wlet.ui.FinanceViewModelFactory
+import com.example.wlet.ui.dashboard.DashboardScreenContent
 import com.example.wlet.ui.home.AddEditTransactionDialog
 import com.example.wlet.ui.home.FloatingDock
 import com.example.wlet.ui.home.HomeScreenContent
@@ -44,7 +45,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainContainer(viewModel: FinanceViewModel) {
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val coroutineScope = rememberCoroutineScope()
     var isAddDialogOpen by remember { mutableStateOf(false) }
     val categories by viewModel.allCategories.collectAsState(initial = emptyList())
@@ -56,11 +57,13 @@ fun MainContainer(viewModel: FinanceViewModel) {
     ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = true
         ) { page ->
             when (page) {
                 0 -> HomeScreenContent(viewModel)
-                1 -> SettingsScreenContent(viewModel)
+                1 -> DashboardScreenContent(viewModel)
+                2 -> SettingsScreenContent(viewModel)
             }
         }
 
@@ -71,17 +74,22 @@ fun MainContainer(viewModel: FinanceViewModel) {
                 .padding(bottom = 32.dp)
         ) {
             FloatingDock(
-                onSettingsClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(1)
-                    }
-                },
-                onAddClick = { isAddDialogOpen = true },
                 onHomeClick = {
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(0)
                     }
-                }
+                },
+                onDashboardClick = {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(1)
+                    }
+                },
+                onSettingsClick = {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(2)
+                    }
+                },
+                onAddClick = { isAddDialogOpen = true }
             )
         }
 

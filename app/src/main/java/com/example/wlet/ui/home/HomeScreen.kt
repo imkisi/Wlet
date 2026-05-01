@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -24,16 +25,21 @@ import com.example.wlet.R
 import com.example.wlet.data.local.entities.Category
 import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.ui.FinanceViewModel
+import com.example.wlet.ui.theme.RobotoMono
 import com.example.wlet.ui.theme.WletTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Main content for the Home Screen.
+ * Handles the list of transactions, grouping them by date, and showing the balance.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenContent(viewModel: FinanceViewModel) {
-    val transactions by viewModel.allTransactions.collectAsState(initial = emptyList())
+    val allTransactions by viewModel.allTransactions.collectAsState(initial = emptyList())
     val categories by viewModel.allCategories.collectAsState(initial = emptyList())
 
     val sheetState = rememberModalBottomSheetState()
@@ -42,11 +48,19 @@ fun HomeScreenContent(viewModel: FinanceViewModel) {
     var isEditDialogOpen by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // Auto-hide transactions from a month ago
+    val filteredTransactions = remember(allTransactions) {
+        val oneMonthAgo = Calendar.getInstance().apply {
+            add(Calendar.MONTH, -1)
+        }.timeInMillis
+        allTransactions.filter { it.date >= oneMonthAgo }
+    }
+
     val currentDate = remember {
         SimpleDateFormat("EEEE, d MMMM", Locale("id", "ID")).format(Date())
     }
 
-    val groupedTransactions = transactions.groupBy {
+    val groupedTransactions = filteredTransactions.groupBy {
         SimpleDateFormat("dd MMM", Locale("id", "ID")).format(Date(it.date))
     }
 
@@ -55,20 +69,20 @@ fun HomeScreenContent(viewModel: FinanceViewModel) {
             modifier = Modifier.fillMaxSize()
         ) {
             item {
-                val totalBalance = transactions.sumOf { 
+                val totalBalance = allTransactions.sumOf { 
                     if (it.transactionType == "INCOME") it.amount else -it.amount 
                 }
                 HeaderSection(
                     tanggal = currentDate,
                     totalSaldo = formatCurrency(totalBalance),
-                    onDateClick = { /* navController.navigate("monthly_report") */ }
+                    onDateClick = { /* future implementation */ }
                 )
             }
 
-            if (transactions.isEmpty()) {
+            if (filteredTransactions.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Text("Belum ada transaksi", color = Color.Gray)
+                        Text("Belum ada transaksi (Bulan ini)", color = Color.Gray)
                     }
                 }
             } else {
@@ -87,7 +101,7 @@ fun HomeScreenContent(viewModel: FinanceViewModel) {
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(120.dp)) }
+            item { Spacer(modifier = Modifier.height(150.dp)) }
         }
 
         if (isSheetVisible) {
@@ -138,6 +152,31 @@ fun HomeScreenContent(viewModel: FinanceViewModel) {
     }
 }
 
+@Composable
+fun TransactionTypeTab(
+    selected: Boolean,
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .height(44.dp)
+            .clickable(onClick = onClick),
+        shape = CircleShape,
+        color = if (selected) Color.Blue else Color(0xFFE0E0E0).copy(alpha = 0.5f), // Warna sesuai Dashboard
+        contentColor = if (selected) Color.White else Color.Gray
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                fontFamily = RobotoMono
+            )
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditTransactionDialog(
@@ -152,7 +191,6 @@ fun AddEditTransactionDialog(
     var description by remember { mutableStateOf(transaction?.description ?: "") }
     var transactionType by remember { mutableStateOf(transaction?.transactionType ?: "EXPENSE") }
     
-    // Use the actual category name instead of ID
     val initialCategoryName = categories.find { it.id == transaction?.categoryId }?.name ?: ""
     var categoryInput by remember { mutableStateOf(initialCategoryName) }
     
@@ -161,33 +199,43 @@ fun AddEditTransactionDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
+            color = Color(0xFFF0ECE9),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = RobotoMono
+                )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = CircleShape,
+                    color = Color(0xFFF2F0EB)
                 ) {
-                    FilterChip(
-                        selected = transactionType == "EXPENSE",
-                        onClick = { 
-                            transactionType = "EXPENSE"
-                        },
-                        label = { Text("Pengeluaran") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterChip(
-                        selected = transactionType == "INCOME",
-                        onClick = { 
-                            transactionType = "INCOME"
-                        },
-                        label = { Text("Pemasukan") },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Row(
+                        modifier = Modifier.padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        TransactionTypeTab(
+                            selected = transactionType == "EXPENSE",
+                            text = "Pengeluaran",
+                            modifier = Modifier.weight(1f),
+                            onClick = { transactionType = "EXPENSE" }
+                        )
+                        TransactionTypeTab(
+                            selected = transactionType == "INCOME",
+                            text = "Pemasukan",
+                            modifier = Modifier.weight(1f),
+                            onClick = { transactionType = "INCOME" }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -230,7 +278,7 @@ fun AddEditTransactionDialog(
                     )
                     
                     DropdownMenu(
-                        expanded = expanded && categories.filter { it.type == transactionType }.isNotEmpty(),
+                        expanded = expanded && categories.any { it.type == transactionType },
                         onDismissRequest = { expanded = false },
                         properties = androidx.compose.ui.window.PopupProperties(focusable = false)
                     ) {
@@ -278,7 +326,7 @@ fun HeaderSection(tanggal: String, totalSaldo: String, onDateClick: () -> Unit) 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 80.dp, bottom = 28.dp),
+            .padding(top = 100.dp, bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
@@ -318,12 +366,6 @@ fun DailyTransactionCard(
     val totalIncome = dailyTransactions.filter { it.transactionType == "INCOME" }.sumOf { it.amount }
     val totalExpense = dailyTransactions.filter { it.transactionType == "EXPENSE" }.sumOf { it.amount }
 
-    val gradientBrush = Brush.verticalGradient(
-        0.0f to Color.White,
-        0.5f to Color.White,
-        1.0f to Color(0xFFF0ECE9)
-    )
-
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -333,7 +375,7 @@ fun DailyTransactionCard(
     ) {
         Column(
             modifier = Modifier
-                .background(brush = gradientBrush)
+                .background(brush = getVerticalThemedGradient())
                 .padding(16.dp)
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -362,6 +404,15 @@ fun DailyTransactionCard(
 }
 
 @Composable
+fun getVerticalThemedGradient(): Brush {
+    return Brush.verticalGradient(
+        0.0f to Color.White,
+        0.5f to Color.White,
+        1.0f to Color(0xFFF0ECE9)
+    )
+}
+
+@Composable
 fun TransactionRow(transaction: Transaction, categoryName: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 10.dp),
@@ -387,7 +438,12 @@ fun TransactionRow(transaction: Transaction, categoryName: String, onClick: () -
 }
 
 @Composable
-fun FloatingDock(onSettingsClick: () -> Unit, onHomeClick: () -> Unit, onAddClick: () -> Unit) {
+fun FloatingDock(
+    onHomeClick: () -> Unit,
+    onDashboardClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onAddClick: () -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(bottom = 16.dp)
@@ -397,12 +453,15 @@ fun FloatingDock(onSettingsClick: () -> Unit, onHomeClick: () -> Unit, onAddClic
             shadowElevation = 6.dp,
             color = Color.White
         ) {
-            Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+            Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onHomeClick, modifier = Modifier.size(48.dp)) {
-                    Icon(painter = painterResource(id = R.drawable.home), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Black)
+                    Icon(painter = painterResource(id = R.drawable.home), contentDescription = "Home", modifier = Modifier.size(24.dp), tint = Color.Black)
+                }
+                IconButton(onClick = onDashboardClick, modifier = Modifier.size(48.dp)) {
+                    Icon(painter = painterResource(id = R.drawable.dashboard), contentDescription = "Dashboard", modifier = Modifier.size(24.dp), tint = Color.Black)
                 }
                 IconButton(onClick = onSettingsClick, modifier = Modifier.size(48.dp)) {
-                    Icon(painter = painterResource(id = R.drawable.settings), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Black)
+                    Icon(painter = painterResource(id = R.drawable.settings), contentDescription = "Settings", modifier = Modifier.size(24.dp), tint = Color.Black)
                 }
             }
         }
@@ -417,7 +476,7 @@ fun FloatingDock(onSettingsClick: () -> Unit, onHomeClick: () -> Unit, onAddClic
             elevation = FloatingActionButtonDefaults.elevation(6.dp),
             modifier = Modifier.size(64.dp)
         ) {
-            Icon(painter = painterResource(id = R.drawable.add), contentDescription = null, modifier = Modifier.size(32.dp))
+            Icon(painter = painterResource(id = R.drawable.add), contentDescription = "Add Transaction", modifier = Modifier.size(32.dp))
         }
     }
 }
@@ -460,7 +519,7 @@ fun EditDeleteSheetContent(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(painter = painterResource(id = R.drawable.edit), contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(painter = painterResource(id = R.drawable.edit), contentDescription = "Edit", modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Edit", fontWeight = FontWeight.Bold)
             }
@@ -471,7 +530,7 @@ fun EditDeleteSheetContent(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(painter = painterResource(id = R.drawable.delete), contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(painter = painterResource(id = R.drawable.delete), contentDescription = "Delete", modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Hapus", fontWeight = FontWeight.Bold)
             }
@@ -507,6 +566,10 @@ fun DetailRow(label: String, value: String, isAmount: Boolean = false, type: Str
     }
 }
 
+/**
+ * Formats a Double value into Indonesian Rupiah currency string.
+ * Removes decimal places for a cleaner look.
+ */
 fun formatCurrency(amount: Double): String {
     val format = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
     format.maximumFractionDigits = 0
@@ -546,44 +609,7 @@ fun DailyTransactionCardPreview() {
 fun FloatingDockPreview() {
     WletTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            FloatingDock(onSettingsClick = {}, onHomeClick = {}, onAddClick = {})
+            FloatingDock(onSettingsClick = {}, onHomeClick = {}, onAddClick = {}, onDashboardClick = {})
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AddEditTransactionDialogPreview() {
-    WletTheme {
-        AddEditTransactionDialog(
-            title = "Tambah Transaksi",
-            categories = listOf(
-                Category(id = 1, name = "Makanan", type = "EXPENSE"),
-                Category(id = 2, name = "Transportasi", type = "EXPENSE")
-            ),
-            onDismiss = {},
-            onSave = { _, _, _, _, _ -> }
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun EditDeleteSheetContentPreview() {
-    WletTheme {
-        EditDeleteSheetContent(
-            transaction = Transaction(
-                name = "Belanja Bulanan",
-                amount = 250000.0,
-                date = System.currentTimeMillis(),
-                description = "Beli kebutuhan dapur",
-                categoryId = 1,
-                transactionType = "EXPENSE"
-            ),
-            categories = listOf(Category(id = 1, name = "Belanja", type = "EXPENSE")),
-            onClose = {},
-            onEdit = {},
-            onDelete = {}
-        )
     }
 }
