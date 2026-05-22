@@ -1,4 +1,49 @@
 <resources>
     <string name="app_name">Wlet</string>
     <string name="title_activity_home">home</string>
+
+    <!-- General / Common -->
+    <string name="income">Pemasukan</string>
+    <string name="expense">Pengeluaran</string>
+    <string name="save">Simpan</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Hapus</string>
+    <string name="close">Tutup</string>
+    <string name="other">Lainnya</string>
+    <string name="general">Umum</string>
+
+    <!-- Home Screen -->
+    <string name="current_balance">Saldo Saat Ini</string>
+    <string name="no_transactions_month">Belum ada transaksi bulan ini</string>
+    <string name="add_transaction">Tambah Transaksi</string>
+    <string name="edit_transaction">Edit Transaksi</string>
+    <string name="transaction_details">Rincian Transaksi</string>
+    <string name="name">Nama</string>
+    <string name="amount">Nominal</string>
+    <string name="category">Kategori</string>
+    <string name="description_optional">Deskripsi (Opsional)</string>
+    <string name="description">Deskripsi</string>
+    <string name="in_label">Masuk</string>
+    <string name="out_label">Keluar</string>
+    <string name="no_category">Tanpa Kategori</string>
+
+    <!-- Dashboard Screen -->
+    <string name="week">Minggu</string>
+    <string name="month">Bulan</string>
+    <string name="year">Tahun</string>
+    <string name="spent">Terpakai</string>
+    <string name="no_data">Belum ada data</string>
+
+    <!-- Settings Screen -->
+    <string name="settings">Pengaturan</string>
+    <string name="language">Bahasa</string>
+    <string name="currency">Mata Uang</string>
+    <string name="manage_categories">Kelola Kategori</string>
+    <string name="manage_categories_desc">Tambah atau hapus kategori</string>
+    <string name="select_language">Pilih Bahasa</string>
+    <string name="change_currency">Ubah Mata Uang</string>
+    <string name="currency_warning">PERINGATAN: Mengubah mata uang akan menghapus semua riwayat transaksi untuk menjaga konsistensi format nominal.</string>
+    <string name="select_new_currency">Pilih Mata Uang Baru:</string>
+    <string name="confirm_and_delete">Konfirmasi &amp; Hapus Data</string>
+    <string name="category_name">Nama Kategori</string>
 </resources>

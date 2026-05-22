@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">Wlet</string>
+    <string name="title_activity_home">home</string>
+
+    <!-- General / Common -->
+    <string name="income">Income</string>
+    <string name="expense">Expense</string>
+    <string name="save">Save</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="close">Close</string>
+    <string name="other">Other</string>
+    <string name="general">General</string>
+
+    <!-- Home Screen -->
+    <string name="current_balance">Current Balance</string>
+    <string name="no_transactions_month">No transactions this month</string>
+    <string name="add_transaction">Add Transaction</string>
+    <string name="edit_transaction">Edit Transaction</string>
+    <string name="transaction_details">Transaction Details</string>
+    <string name="name">Name</string>
+    <string name="amount">Amount</string>
+    <string name="category">Category</string>
+    <string name="description_optional">Description (Optional)</string>
+    <string name="description">Description</string>
+    <string name="in_label">In</string>
+    <string name="out_label">Out</string>
+    <string name="no_category">No Category</string>
+
+    <!-- Dashboard Screen -->
+    <string name="week">Week</string>
+    <string name="month">Month</string>
+    <string name="year">Year</string>
+    <string name="spent">Spent</string>
+    <string name="no_data">No data yet</string>
+
+    <!-- Settings Screen -->
+    <string name="settings">Settings</string>
+    <string name="language">Language</string>
+    <string name="currency">Currency</string>
+    <string name="manage_categories">Manage Categories</string>
+    <string name="manage_categories_desc">Add or delete categories</string>
+    <string name="select_language">Select Language</string>
+    <string name="change_currency">Change Currency</string>
+    <string name="currency_warning">WARNING: Changing currency will delete all transaction history to maintain nominal format consistency.</string>
+    <string name="select_new_currency">Select New Currency:</string>
+    <string name="confirm_and_delete">Confirm &amp; Delete Data</string>
+    <string name="category_name">Category Name</string>
+</resources>

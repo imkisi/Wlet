@@ -20,6 +20,10 @@ class FinanceRepository(private val dao: TransactionDao) {
         dao.deleteTransaction(transaction)
     }
 
+    suspend fun deleteAllTransactions() {
+        dao.deleteAllTransactions()
+    }
+
     suspend fun addCategory(category: Category): Long {
         return dao.insertCategory(category)
     }

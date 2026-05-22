@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.Wlet" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Base application theme inheriting from AppCompat theme to support AppCompatActivity. -->
+    <style name="Theme.Wlet" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>

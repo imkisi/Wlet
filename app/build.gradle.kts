@@ -14,7 +14,7 @@ android {
         minSdk = 24
         targetSdk = 35
         versionCode = 2
-        versionName = "2.0.106"
+        versionName = "2.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -57,12 +57,22 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.compose.ui.text)
     ksp(libs.androidx.room.compiler)
     
+    // Navigation
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+
+    // UI & Text
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.compose.ui.text)
+    
+    // AppCompat for Locale management
+    implementation(libs.androidx.appcompat)
+
+    // Glance for App Widgets
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

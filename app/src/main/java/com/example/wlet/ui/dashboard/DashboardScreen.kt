@@ -4,46 +4,58 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wlet.R
 import com.example.wlet.data.local.entities.Category
 import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.ui.FinanceViewModel
-import com.example.wlet.ui.home.formatCurrency
+import com.example.wlet.ui.theme.RobotoMono
 import com.example.wlet.ui.theme.WletTheme
+import com.example.wlet.ui.theme.getVerticalThemedGradient
+import com.example.wlet.ui.util.formatCurrency
 import java.util.*
 import kotlin.math.*
 
 /**
- * Main content for the Dashboard Screen.
- * Provides summaries of expenses across different timeframes with a bubble cluster visualizer.
+ * DashboardScreenContent acts as the container for the spending recap.
  */
 @Composable
 fun DashboardScreenContent(viewModel: FinanceViewModel) {
     val transactions by viewModel.allTransactions.collectAsState(initial = emptyList())
     val categories by viewModel.allCategories.collectAsState(initial = emptyList())
+    val currentCurrency by viewModel.currency.collectAsState()
 
-    DashboardScreenUI(transactions, categories)
+    DashboardScreenUI(transactions, categories, currentCurrency)
 }
 
 @Composable
 fun DashboardScreenUI(
     transactions: List<Transaction>,
-    categories: List<Category>
+    categories: List<Category>,
+    currencyCode: String
 ) {
     var selectedTab by remember { mutableStateOf(1) } // 0: Minggu, 1: Bulan, 2: Tahun
-    val tabs = listOf("Minggu", "Bulan", "Tahun")
+    val tabs = listOf(
+        stringResource(R.string.week),
+        stringResource(R.string.month),
+        stringResource(R.string.year)
+    )
 
     val filteredTransactions = remember(transactions, selectedTab) {
         val calendar = Calendar.getInstance()
@@ -87,7 +99,6 @@ fun DashboardScreenUI(
 
     val totalExpense = filteredTransactions.sumOf { it.amount }
     
-    // Custom Palette based on requirements
     val categoryColors = listOf(
         Color(0xFFF4EFEE), Color(0xFFFFD3CF), Color(0xFFFF88AA),
         Color(0xFFFFB1C1), Color(0xFFD47AFF), Color(0xFF924FF1),
@@ -122,7 +133,7 @@ fun DashboardScreenUI(
         ) {
             Spacer(modifier = Modifier.height(90.dp))
 
-            // Tab Selector - Pill shaped at top center
+            // Tab Selector - UI requirement: white bg, border 2px white, match height
             Surface(
                 color = Color.White,
                 shape = CircleShape,
@@ -132,7 +143,8 @@ fun DashboardScreenUI(
             ) {
                 Row(
                     modifier = Modifier.padding(0.dp),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     tabs.forEachIndexed { index, title ->
                         val isSelected = selectedTab == index
@@ -141,43 +153,51 @@ fun DashboardScreenUI(
                             color = if (isSelected) Color.Blue else Color.Transparent,
                             shape = CircleShape
                         ) {
-                            Text(
-                                text = title,
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                                color = if (isSelected) Color.White else Color.Black,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
+                                Text(
+                                    text = title,
+                                    color = if (isSelected) Color.White else Color.Black,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontFamily = RobotoMono
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-            // Bubble Visualization cluster - Central element
+            // Bubble Visualization
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                BubbleCluster(categoryExpenses, totalExpense)
+                BubbleCluster(categoryExpenses, totalExpense, currencyCode)
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Total Expense Display - Below bubbles
+            // Total Expense Display
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 150.dp) // Leave space for Dock
+                modifier = Modifier.padding(bottom = 150.dp)
             ) {
-                Text(text = "Terpakai", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = formatCurrency(totalExpense),
-                    style = MaterialTheme.typography.headlineLarge.copy(
+                    text = stringResource(R.string.spent), 
+                    color = Color.Gray, 
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = RobotoMono
+                )
+                Text(
+                    text = formatCurrency(totalExpense, currencyCode),
+                    style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1A1C1E)
+                        color = Color(0xFF1A1C1E),
+                        fontFamily = RobotoMono
                     ),
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -187,25 +207,13 @@ fun DashboardScreenUI(
 }
 
 /**
- * Bubble position data class
- */
-private data class BubbleNode(
-    val category: Category?,
-    val amount: Double,
-    val color: Color,
-    val size: Float,
-    var x: Float,
-    var y: Float
-)
-
-/**
- * Renders bubbles packed together containing category info.
- * Bubbles stick together but do not overlap using a custom packing logic.
+ * Packs bubbles tightly around the center containing category info.
  */
 @Composable
 fun BubbleCluster(
     categoryExpenses: List<Triple<Category?, Double, Color>>,
-    total: Double
+    total: Double,
+    currencyCode: String
 ) {
     if (total == 0.0) {
         Box(
@@ -215,13 +223,12 @@ fun BubbleCluster(
                 .background(Color.White.copy(alpha = 0.5f)),
             contentAlignment = Alignment.Center
         ) {
-            Text("Belum ada data", color = Color.Gray)
+            Text(stringResource(R.string.no_data), color = Color.Gray, fontFamily = RobotoMono)
         }
     } else {
         val bubbleNodes = remember(categoryExpenses, total) {
             val nodes = categoryExpenses.map { (cat, amt, color) ->
                 val ratio = (amt / total).toFloat()
-                // Size represents total expense: base 100 + scale
                 val size = 110f + (ratio * 140f)
                 BubbleNode(cat, amt, color, size, 0f, 0f)
             }
@@ -229,7 +236,6 @@ fun BubbleCluster(
             nodes
         }
 
-        // Floating animation effect
         val infiniteTransition = rememberInfiniteTransition(label = "bubble_float")
         val phase by infiniteTransition.animateFloat(
             initialValue = 0f,
@@ -243,9 +249,8 @@ fun BubbleCluster(
 
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             bubbleNodes.forEachIndexed { index, node ->
-                val floatX = sin(phase + index) * 6f
-                val floatY = cos(phase + index * 0.7f) * 6f
-                
+                val floatX = sin(phase + index) * 5f
+                val floatY = cos(phase + index * 0.5f) * 5f
                 val ratio = (node.amount / total).toFloat()
 
                 Surface(
@@ -262,11 +267,12 @@ fun BubbleCluster(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = node.category?.name ?: "Lainnya",
+                            text = node.category?.name ?: stringResource(R.string.other),
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = (10 + (ratio * 5)).sp,
-                                color = if (isColorDark(node.color)) Color.White else Color.Black
+                                color = if (isColorDark(node.color)) Color.White else Color.Black,
+                                fontFamily = RobotoMono
                             ),
                             textAlign = TextAlign.Center,
                             maxLines = 1,
@@ -274,11 +280,12 @@ fun BubbleCluster(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = formatCurrency(node.amount),
+                            text = formatCurrency(node.amount, currencyCode),
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontSize = (9 + (ratio * 6)).sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = if (isColorDark(node.color)) Color.White else Color.Black
+                                color = if (isColorDark(node.color)) Color.White else Color.Black,
+                                fontFamily = RobotoMono
                             ),
                             textAlign = TextAlign.Center
                         )
@@ -289,28 +296,29 @@ fun BubbleCluster(
     }
 }
 
-/**
- * Packs bubbles tightly around the center (0,0) without overlapping.
- */
+private data class BubbleNode(
+    val category: Category?,
+    val amount: Double,
+    val color: Color,
+    val size: Float,
+    var x: Float,
+    var y: Float
+)
+
 private fun packBubbles(nodes: List<BubbleNode>) {
     if (nodes.isEmpty()) return
-    
     val sorted = nodes.sortedByDescending { it.size }
     sorted[0].x = 0f
     sorted[0].y = 0f
-    
     for (i in 1 until sorted.size) {
         val node = sorted[i]
         val radius = node.size / 2f
-        
         var angle = 0f
         var distance = 0f
         var placed = false
-        
         while (!placed && distance < 1200f) {
             val tx = cos(angle) * distance
             val ty = sin(angle) * distance
-            
             var collision = false
             for (j in 0 until i) {
                 val other = sorted[j]
@@ -323,7 +331,6 @@ private fun packBubbles(nodes: List<BubbleNode>) {
                     break
                 }
             }
-            
             if (!collision) {
                 node.x = tx
                 node.y = ty
@@ -336,9 +343,6 @@ private fun packBubbles(nodes: List<BubbleNode>) {
     }
 }
 
-/**
- * Helper to determine if text should be white or black based on background luminance.
- */
 fun isColorDark(color: Color): Boolean {
     val luminance = 0.299 * color.red + 0.587 * color.green + 0.114 * color.blue
     return luminance < 0.5
@@ -350,16 +354,12 @@ fun DashboardScreenPreview() {
     WletTheme {
         val sampleCategories = listOf(
             Category(id = 1, name = "Belanja", type = "EXPENSE"),
-            Category(id = 2, name = "Makanan", type = "EXPENSE"),
-            Category(id = 3, name = "Transport", type = "EXPENSE"),
-            Category(id = 4, name = "Lainnya", type = "EXPENSE")
+            Category(id = 2, name = "Makanan", type = "EXPENSE")
         )
         val sampleTransactions = listOf(
             Transaction(name = "T1", amount = 1500000.0, date = System.currentTimeMillis(), description = "", categoryId = 1, transactionType = "EXPENSE"),
-            Transaction(name = "T2", amount = 800000.0, date = System.currentTimeMillis(), description = "", categoryId = 2, transactionType = "EXPENSE"),
-            Transaction(name = "T3", amount = 400000.0, date = System.currentTimeMillis(), description = "", categoryId = 3, transactionType = "EXPENSE"),
-            Transaction(name = "T4", amount = 100000.0, date = System.currentTimeMillis(), description = "", categoryId = 4, transactionType = "EXPENSE")
+            Transaction(name = "T2", amount = 800000.0, date = System.currentTimeMillis(), description = "", categoryId = 2, transactionType = "EXPENSE")
         )
-        DashboardScreenUI(transactions = sampleTransactions, categories = sampleCategories)
+        DashboardScreenUI(transactions = sampleTransactions, categories = sampleCategories, currencyCode = "IDR")
     }
 }

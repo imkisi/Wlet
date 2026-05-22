@@ -1,9 +1,11 @@
 package com.example.wlet
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.res.stringResource
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,17 +21,23 @@ import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.ui.FinanceViewModel
 import com.example.wlet.ui.FinanceViewModelFactory
 import com.example.wlet.ui.dashboard.DashboardScreenContent
-import com.example.wlet.ui.home.AddEditTransactionDialog
+import com.example.wlet.ui.home.AddEditTransactionSheetContent
 import com.example.wlet.ui.home.FloatingDock
 import com.example.wlet.ui.home.HomeScreenContent
 import com.example.wlet.ui.settings.SettingsScreenContent
 import com.example.wlet.ui.theme.WletTheme
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+/**
+ * MainActivity is the primary entry point of the application.
+ * It manages the app's root navigation structure using a HorizontalPager and coordinates
+ * global UI elements like the Transaction entry Bottom Sheet.
+ */
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: FinanceViewModel by viewModels {
-        FinanceViewModelFactory((application as WletApplication).repository)
+        val app = application as WletApplication
+        FinanceViewModelFactory(app.repository, app.settingsManager)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,18 +45,42 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WletTheme {
-                MainContainer(viewModel)
+                MainContainer(viewModel, intent)
             }
         }
     }
+
+    /**
+     * Responds to new intents (e.g., from widgets) while the activity is in the foreground.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
 }
 
+/**
+ * MainContainer manages the navigation and shared states like Bottom Sheets.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContainer(viewModel: FinanceViewModel) {
+fun MainContainer(viewModel: FinanceViewModel, intent: Intent?) {
     val pagerState = rememberPagerState(pageCount = { 3 })
     val coroutineScope = rememberCoroutineScope()
-    var isAddDialogOpen by remember { mutableStateOf(false) }
     val categories by viewModel.allCategories.collectAsState(initial = emptyList())
+
+    // Shared Bottom Sheet State for Adding/Editing Transactions
+    val addEditSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showAddEditSheet by remember { mutableStateOf(false) }
+    var transactionToEdit by remember { mutableStateOf<Transaction?>(null) }
+
+    // Check for Widget Action
+    LaunchedEffect(intent) {
+        if (intent?.getBooleanExtra("SHOW_ADD_SHEET", false) == true) {
+            transactionToEdit = null
+            showAddEditSheet = true
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -61,13 +93,19 @@ fun MainContainer(viewModel: FinanceViewModel) {
             userScrollEnabled = true
         ) { page ->
             when (page) {
-                0 -> HomeScreenContent(viewModel)
+                0 -> HomeScreenContent(
+                    viewModel = viewModel,
+                    onShowEditSheet = { transaction ->
+                        transactionToEdit = transaction
+                        showAddEditSheet = true
+                    }
+                )
                 1 -> DashboardScreenContent(viewModel)
                 2 -> SettingsScreenContent(viewModel)
             }
         }
 
-        // Persistent Navigation and Action buttons
+        // Action Buttons (Fixed at bottom center)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -75,46 +113,62 @@ fun MainContainer(viewModel: FinanceViewModel) {
         ) {
             FloatingDock(
                 onHomeClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(0)
-                    }
+                    coroutineScope.launch { pagerState.animateScrollToPage(0) }
                 },
                 onDashboardClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(1)
-                    }
+                    coroutineScope.launch { pagerState.animateScrollToPage(1) }
                 },
                 onSettingsClick = {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(2)
-                    }
+                    coroutineScope.launch { pagerState.animateScrollToPage(2) }
                 },
-                onAddClick = { isAddDialogOpen = true }
+                onAddClick = {
+                    transactionToEdit = null
+                    showAddEditSheet = true
+                }
             )
         }
 
-        if (isAddDialogOpen) {
-            AddEditTransactionDialog(
-                title = "Tambah Transaksi",
-                categories = categories,
-                onDismiss = { isAddDialogOpen = false },
-                onSave = { name, amount, desc, categoryName, type ->
-                    coroutineScope.launch {
-                        val categoryId = viewModel.getOrCreateCategory(categoryName, type)
-                        viewModel.insert(
-                            Transaction(
-                                name = name,
-                                amount = amount,
-                                date = System.currentTimeMillis(),
-                                description = desc,
-                                categoryId = categoryId,
-                                transactionType = type
-                            )
-                        )
-                        isAddDialogOpen = false
+        // Modal Bottom Sheet for Transaction Input
+        if (showAddEditSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showAddEditSheet = false },
+                sheetState = addEditSheetState,
+                containerColor = Color.White
+            ) {
+                AddEditTransactionSheetContent(
+                    title = if (transactionToEdit == null) stringResource(R.string.add_transaction) else stringResource(R.string.edit_transaction),
+                    transaction = transactionToEdit,
+                    categories = categories,
+                    onSave = { name, amount, desc, categoryName, type ->
+                        coroutineScope.launch {
+                            val categoryId = viewModel.getOrCreateCategory(categoryName, type)
+                            if (transactionToEdit == null) {
+                                viewModel.insert(
+                                    Transaction(
+                                        name = name,
+                                        amount = amount,
+                                        date = System.currentTimeMillis(),
+                                        description = desc,
+                                        categoryId = categoryId,
+                                        transactionType = type
+                                    )
+                                )
+                            } else {
+                                viewModel.update(
+                                    transactionToEdit!!.copy(
+                                        name = name,
+                                        amount = amount,
+                                        description = desc,
+                                        categoryId = categoryId,
+                                        transactionType = type
+                                    )
+                                )
+                            }
+                            showAddEditSheet = false
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }

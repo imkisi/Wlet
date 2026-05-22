@@ -27,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "wlet_database"
                 )
                     .addCallback(DatabaseCallback(scope))
+                    .fallbackToDestructiveMigration() // Fix for "Force Close" during development schema changes
                     .build()
                 INSTANCE = instance
                 instance
@@ -40,12 +41,11 @@ abstract class AppDatabase : RoomDatabase() {
             INSTANCE?.let { database ->
                 scope.launch {
                     val dao = database.transactionDao()
-                    // Data awal
+                    // Initial Data
                     dao.insertCategory(Category(name = "Makanan & Minuman", type = "EXPENSE"))
                     dao.insertCategory(Category(name = "Belanja", type = "EXPENSE"))
                     dao.insertCategory(Category(name = "Hiburan", type = "EXPENSE"))
                     dao.insertCategory(Category(name = "Simpanan", type = "INCOME"))
-                    // Tambahkan kategori lainnya...
                 }
             }
         }
