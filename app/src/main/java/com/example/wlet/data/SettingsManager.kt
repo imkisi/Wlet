@@ -2,6 +2,7 @@ package com.example.wlet.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.util.Locale
 
 /**
  * SettingsManager handles persistence for user preferences like Language and Currency.
@@ -14,6 +15,11 @@ class SettingsManager(context: Context) {
         set(value) = prefs.edit().putString("currency", value).apply()
 
     var language: String
-        get() = prefs.getString("language", "id") ?: "id"
+        get() {
+            val systemLanguage = Locale.getDefault().language
+            val defaultLanguage = if (systemLanguage == "id") "id" else "en"
+            return prefs.getString("language", defaultLanguage) ?: defaultLanguage
+        }
         set(value) = prefs.edit().putString("language", value).apply()
 }
+

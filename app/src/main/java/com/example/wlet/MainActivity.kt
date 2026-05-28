@@ -3,6 +3,8 @@ package com.example.wlet
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.res.stringResource
@@ -42,6 +44,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Restore application locale from settings
+        val app = application as WletApplication
+        val savedLang = app.settingsManager.language
+        val appLocale = LocaleListCompat.forLanguageTags(savedLang)
+        if (AppCompatDelegate.getApplicationLocales() != appLocale) {
+            AppCompatDelegate.setApplicationLocales(appLocale)
+        }
+        
         enableEdgeToEdge()
         setContent {
             WletTheme {
