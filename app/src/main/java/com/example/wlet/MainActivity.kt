@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: FinanceViewModel by viewModels {
         val app = application as WletApplication
-        FinanceViewModelFactory(app.repository, app.settingsManager)
+        FinanceViewModelFactory(app, app.repository, app.settingsManager)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -133,7 +133,7 @@ fun MainContainer(viewModel: FinanceViewModel, intent: Intent?) {
             ModalBottomSheet(
                 onDismissRequest = { showAddEditSheet = false },
                 sheetState = addEditSheetState,
-                containerColor = Color.White
+                containerColor = Color(0xFFF0ECE9)
             ) {
                 AddEditTransactionSheetContent(
                     title = if (transactionToEdit == null) stringResource(R.string.add_transaction) else stringResource(R.string.edit_transaction),

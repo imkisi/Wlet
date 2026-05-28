@@ -44,6 +44,7 @@
     <string name="change_currency">Change Currency</string>
     <string name="currency_warning">WARNING: Changing currency will delete all transaction history to maintain nominal format consistency.</string>
     <string name="select_new_currency">Select New Currency:</string>
-    <string name="confirm_and_delete">Confirm &amp; Delete Data</string>
+    <string name="confirm_and_delete">Reset and Continue</string>
     <string name="category_name">Category Name</string>
+    <string name="today_spent">Today`s Expenses</string>
 </resources>

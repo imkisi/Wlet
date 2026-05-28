@@ -133,7 +133,7 @@ fun DashboardScreenUI(
         ) {
             Spacer(modifier = Modifier.height(90.dp))
 
-            // Tab Selector - UI requirement: white bg, border 2px white, match height
+            // Tab Selector
             Surface(
                 color = Color.White,
                 shape = CircleShape,
@@ -143,8 +143,7 @@ fun DashboardScreenUI(
             ) {
                 Row(
                     modifier = Modifier.padding(0.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     tabs.forEachIndexed { index, title ->
                         val isSelected = selectedTab == index
@@ -153,19 +152,18 @@ fun DashboardScreenUI(
                             color = if (isSelected) Color.Blue else Color.Transparent,
                             shape = CircleShape
                         ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
-                                Text(
-                                    text = title,
-                                    color = if (isSelected) Color.White else Color.Black,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    fontFamily = RobotoMono
-                                )
-                            }
+                            Text(
+                                text = title,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                color = if (isSelected) Color.White else Color.Black,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
                         }
                     }
                 }
             }
+
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -194,7 +192,7 @@ fun DashboardScreenUI(
                 )
                 Text(
                     text = formatCurrency(totalExpense, currencyCode),
-                    style = MaterialTheme.typography.displayMedium.copy(
+                    style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1A1C1E),
                         fontFamily = RobotoMono

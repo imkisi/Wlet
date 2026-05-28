@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -66,7 +67,7 @@ fun SettingsScreenContent(viewModel: FinanceViewModel) {
         ModalBottomSheet(
             onDismissRequest = { activeSheet = null },
             sheetState = sheetState,
-            containerColor = Color.White,
+            containerColor = Color(0xFFF0ECE9),
             tonalElevation = 0.dp
         ) {
             when (activeSheet) {
@@ -238,8 +239,27 @@ fun SocialIconButton(label: String, iconRes: Int, modifier: Modifier = Modifier,
 
 @Composable
 fun LanguageSelectionSheetContent(currentLanguage: String, onLanguageSelected: (String) -> Unit) {
-    Column(modifier = Modifier.padding(24.dp).navigationBarsPadding()) {
-        Text(stringResource(R.string.select_language), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+    Column(modifier = Modifier
+        .padding(horizontal = 24.dp, vertical = 16.dp)
+        .navigationBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .size(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.language),
+                contentDescription = null,
+                tint = Color.Blue,
+                modifier = Modifier.size(48.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(stringResource(R.string.select_language), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
         Spacer(modifier = Modifier.height(24.dp))
         
         LanguageItem(
@@ -258,60 +278,105 @@ fun LanguageSelectionSheetContent(currentLanguage: String, onLanguageSelected: (
 
 @Composable
 fun LanguageItem(label: String, selected: Boolean, onClick: () -> Unit) {
-    ListItem(
-        modifier = Modifier.clickable { onClick() },
-        headlineContent = { Text(label, fontFamily = RobotoMono, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
-        leadingContent = { Icon(painterResource(R.drawable.language), null, tint = if (selected) Color.Blue else Color.Gray, modifier = Modifier.size(24.dp)) },
-        trailingContent = { if (selected) RadioButton(selected = true, onClick = null) }
-    )
+    Surface(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 6.dp),
+        shape = RoundedCornerShape(50.dp),
+        color = Color(0xFFE0E0E0).copy(alpha = 0.7f))
+    {
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier
+                .clickable { onClick() }
+                .padding(vertical = 0.dp, horizontal = 8.dp),
+            headlineContent = {
+                Text(label,
+                fontFamily = RobotoMono,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+            trailingContent = {
+                if (selected)
+                    RadioButton(selected = true,
+                        onClick = null,
+                        colors = RadioButtonDefaults.colors(selectedColor = Color.Blue)
+                    )
+            }
+        )
+    }
 }
 
 @Composable
 fun CurrencyChangeSheetContent(currentCurrency: String, onConfirm: (String) -> Unit) {
     var selectedCurrency by remember { mutableStateOf(currentCurrency) }
-    val currencies = listOf("IDR", "USD", "EUR", "JPY", "GBP")
+    val currencies = listOf("IDR - Indonesia (Rp)", "USD - United States ($)", "EUR - Europe (€)", "JPY - Japan (¥)", "GBP - United Kingdom (£)")
 
-    Column(modifier = Modifier.padding(24.dp).navigationBarsPadding()) {
-        Text(stringResource(R.string.change_currency), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Surface(
-            color = Color.Red.copy(alpha = 0.1f),
-            shape = RoundedCornerShape(12.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f))
+    Column(modifier = Modifier
+        .padding(horizontal = 24.dp, vertical = 16.dp)
+        .navigationBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .size(48.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = stringResource(R.string.currency_warning),
-                color = Color.Red,
-                fontFamily = RobotoMono,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(12.dp)
+            Icon(
+                painter = painterResource(id = R.drawable.currency),
+                contentDescription = null,
+                tint = Color.Blue,
+                modifier = Modifier.size(48.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(stringResource(R.string.change_currency), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = stringResource(R.string.currency_warning),
+            fontFamily = RobotoMono,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        Text(stringResource(R.string.select_new_currency), style = MaterialTheme.typography.labelLarge, fontFamily = RobotoMono)
-        Spacer(modifier = Modifier.height(8.dp))
-        
         currencies.forEach { currency ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { selectedCurrency = currency }
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = 6.dp),
+                shape = RoundedCornerShape(50.dp),
+                color = Color(0xFFE0E0E0).copy(alpha = 0.7f)
             ) {
-                RadioButton(selected = selectedCurrency == currency, onClick = { selectedCurrency = currency })
-                Text(text = currency, modifier = Modifier.padding(start = 16.dp), fontFamily = RobotoMono)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedCurrency = currency }
+                        .padding(vertical = 4.dp, horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = currency, modifier = Modifier.padding(start = 16.dp), fontFamily = RobotoMono)
+                    RadioButton(
+                        selected = selectedCurrency == currency,
+                        onClick = { selectedCurrency = currency },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = Color.Blue,
+                            unselectedColor = Color.Blue.copy(alpha = 0.8f))
+                    )
+                }
             }
+
         }
 
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = { onConfirm(selectedCurrency) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(stringResource(R.string.confirm_and_delete), fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
@@ -329,27 +394,56 @@ fun ManageCategoriesSheetContent(
     var newCategoryName by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf("EXPENSE") }
 
-    Column(modifier = Modifier.padding(24.dp).fillMaxHeight(0.85f)) {
-        Text(stringResource(R.string.manage_categories), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+    Column(modifier = Modifier
+        .padding(horizontal = 24.dp, vertical = 16.dp)
+        .navigationBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .size(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.categories),
+                contentDescription = null,
+                tint = Color.Blue,
+                modifier = Modifier.size(48.dp)
+            )
+        }
 
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(
-                modifier = Modifier.weight(1f).height(44.dp).clickable { selectedType = "EXPENSE" },
-                shape = CircleShape,
-                color = if (selectedType == "EXPENSE") Color.Blue else Color.LightGray.copy(alpha = 0.3f),
-                contentColor = if (selectedType == "EXPENSE") Color.White else Color.Black
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(stringResource(R.string.manage_categories), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+        Spacer(modifier = Modifier.height(18.dp))
+        // Main Pill-shaped Container Surface
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = CircleShape,
+            color = Color(0xFFE0E0E0).copy(alpha = 0.7f)
+        ) {
+            Row(
+                modifier = Modifier.padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) { Text(stringResource(R.string.expense), fontFamily = RobotoMono) }
-            }
-            Surface(
-                modifier = Modifier.weight(1f).height(44.dp).clickable { selectedType = "INCOME" },
-                shape = CircleShape,
-                color = if (selectedType == "INCOME") Color.Blue else Color.LightGray.copy(alpha = 0.3f),
-                contentColor = if (selectedType == "INCOME") Color.White else Color.Black
-            ) {
-                Box(contentAlignment = Alignment.Center) { Text(stringResource(R.string.income), fontFamily = RobotoMono) }
+                TransactionTypeSlider(
+                    selected = selectedType == "EXPENSE",
+                    text = stringResource(R.string.expense),
+                    modifier = Modifier.weight(1f),
+                    onClick = { selectedType = "EXPENSE" }
+                )
+                TransactionTypeSlider(
+                    selected = selectedType == "INCOME",
+                    text = stringResource(R.string.income),
+                    modifier = Modifier.weight(1f),
+                    onClick = { selectedType = "INCOME" }
+                )
             }
         }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
@@ -370,22 +464,70 @@ fun ManageCategoriesSheetContent(
             }
         }
 
-        LazyColumn(modifier = Modifier.weight(1f).padding(top = 16.dp)) {
+        LazyColumn(modifier = Modifier.weight(1f).padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             items(categories.filter { it.type == selectedType }) { category ->
-                ListItem(
-                    headlineContent = { Text(category.name, fontFamily = RobotoMono) },
-                    trailingContent = {
-                        IconButton(onClick = { onDeleteCategory(category) }) {
-                            Icon(painter = painterResource(id = R.drawable.delete), contentDescription = null, tint = Color.Red, modifier = Modifier.size(20.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFE0DCD9).copy(alpha = 0.6f),
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
+                    ) {
+                        Text(
+                            text = category.name,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontFamily = RobotoMono,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = Color.Black
+                        )
+
+                        IconButton(
+                            onClick = { onDeleteCategory(category) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.delete),
+                                contentDescription = "Delete Category",
+                                tint = Color.Black,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
-                )
-                HorizontalDivider(thickness = 0.5.dp)
+                }
             }
         }
     }
 }
 
+@Composable
+fun TransactionTypeSlider(
+    selected: Boolean,
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .height(44.dp)
+            .clickable(onClick = onClick),
+        shape = CircleShape,
+        color = if (selected) Color.Blue else Color.Transparent,
+        contentColor = if (selected) Color.White else Color.Blue
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                fontFamily = RobotoMono
+            )
+        }
+    }
+}
 @Composable
 fun SettingsItem(iconRes: Int, title: String, subtitle: String, onClick: () -> Unit) {
     Surface(

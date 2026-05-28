@@ -44,6 +44,7 @@
     <string name="change_currency">Ubah Mata Uang</string>
     <string name="currency_warning">PERINGATAN: Mengubah mata uang akan menghapus semua riwayat transaksi untuk menjaga konsistensi format nominal.</string>
     <string name="select_new_currency">Pilih Mata Uang Baru:</string>
-    <string name="confirm_and_delete">Konfirmasi &amp; Hapus Data</string>
+    <string name="confirm_and_delete">Hapus dan Lanjutkan</string>
     <string name="category_name">Nama Kategori</string>
+    <string name="today_spent">Pengeluaran hari ini</string>
 </resources>

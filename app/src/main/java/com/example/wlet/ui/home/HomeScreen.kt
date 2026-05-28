@@ -135,7 +135,7 @@ fun HomeScreenContent(
             ModalBottomSheet(
                 onDismissRequest = { isDetailSheetVisible = false },
                 sheetState = sheetState,
-                containerColor = Color.White
+                containerColor = Color(0xFFF0ECE9)
             ) {
                 EditDeleteSheetContent(
                     transaction = selectedTransaction,
@@ -177,13 +177,30 @@ fun AddEditTransactionSheetContent(
 
     Column(
         modifier = Modifier
-            .padding(24.dp)
+            .padding(horizontal = 24.dp, vertical = 0.dp)
             .navigationBarsPadding()
-            .imePadding()
+            .imePadding(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .size(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.transaction_new),
+                contentDescription = null,
+                tint = Color.Blue,
+                modifier = Modifier.size(48.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
             fontFamily = RobotoMono
         )
@@ -194,7 +211,7 @@ fun AddEditTransactionSheetContent(
         Surface(
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = CircleShape,
-            color = Color(0xFFF2F0EB)
+            color = Color(0xFFE0E0E0).copy(alpha = 0.7f)
         ) {
             Row(modifier = Modifier.padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TransactionTypeTab(
@@ -304,7 +321,7 @@ fun TransactionTypeTab(selected: Boolean, text: String, modifier: Modifier = Mod
         modifier = modifier.height(44.dp).clickable(onClick = onClick),
         shape = CircleShape,
         color = if (selected) Color.Blue else Color.Transparent,
-        contentColor = if (selected) Color.White else Color.Gray
+        contentColor = if (selected) Color.White else Color.Blue
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(text = text, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, fontFamily = RobotoMono)
@@ -405,32 +422,84 @@ fun FloatingDock(onHomeClick: () -> Unit, onDashboardClick: () -> Unit, onSettin
 @Composable
 fun EditDeleteSheetContent(transaction: Transaction?, categories: List<Category>, currencyCode: String, onClose: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
     val categoryName = categories.find { it.id == transaction?.categoryId }?.name ?: "Tanpa Kategori"
-    Column(modifier = Modifier.fillMaxWidth().padding(24.dp).navigationBarsPadding()) {
-        Text(text = stringResource(R.string.transaction_details), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .navigationBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .size(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.transaction_report),
+                contentDescription = null,
+                tint = Color.Blue,
+                modifier = Modifier.size(48.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = stringResource(R.string.transaction_details), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
         Spacer(modifier = Modifier.height(24.dp))
-        DetailRow(stringResource(R.string.name), transaction?.name ?: "")
-        DetailRow(stringResource(R.string.amount), formatCurrency(transaction?.amount ?: 0.0, currencyCode), isAmount = true, type = transaction?.transactionType)
-        DetailRow(stringResource(R.string.category), categoryName)
-        if (!transaction?.description.isNullOrBlank()) DetailRow(stringResource(R.string.description), transaction?.description ?: "")
-        Spacer(modifier = Modifier.height(32.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onEdit, modifier = Modifier.weight(1f).height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Blue), shape = RoundedCornerShape(16.dp)) {
-                Icon(painterResource(R.drawable.edit), "Edit", Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.edit), fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
-            }
-            Button(onClick = onDelete, modifier = Modifier.weight(1f).height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Red), shape = RoundedCornerShape(16.dp)) {
-                Icon(painterResource(R.drawable.delete), "Delete", Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.delete), fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                DetailRow(label = "Name", value = transaction?.name ?: "")
+                DetailRow(
+                    label = "Ammount",
+                    value = formatCurrency(transaction?.amount ?: 0.0, currencyCode),
+                    valueColor = if (transaction?.transactionType == "INCOME") Color.Blue else Color.Black
+                )
+                DetailRow(label = "Categories", value = categoryName)
+                DetailRow(label = "Description", value = transaction?.description?.ifBlank { "-" } ?: "-")
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp)) {
-            Text(stringResource(R.string.close), fontWeight = FontWeight.Bold, fontFamily = RobotoMono)
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onEdit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(stringResource(R.string.edit), fontWeight = FontWeight.Bold, fontSize = 16.sp, fontFamily = RobotoMono, color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(
+            onClick = onDelete,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.delete),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = RobotoMono,
+                    color = Color.Black.copy(alpha = 0.6f)
+                )
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-fun DetailRow(label: String, value: String, isAmount: Boolean = false, type: String? = null) {
+fun DetailRow(label: String, value: String, valueColor: Color = Color.Black, isAmount: Boolean = false, type: String? = null) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontFamily = RobotoMono)
         val color = if (isAmount) (if (type == "INCOME") Color.Blue else Color.Red) else Color.Black
@@ -441,3 +510,51 @@ fun DetailRow(label: String, value: String, isAmount: Boolean = false, type: Str
 @Preview(showBackground = true)
 @Composable
 fun HeaderSectionPreview() { WletTheme { HeaderSection("Senin, 10 Maret", "Rp 500.000") } }
+
+@Preview(showBackground = true)
+@Composable
+fun EditDeleteSheetContentPreview() {
+    val categories = listOf(
+        Category(id = 1, name = "Makanan", type = "EXPENSE"),
+        Category(id = 2, name = "Gaji", type = "INCOME"),
+        Category(id = 3, name = "Hiburan", type = "EXPENSE")
+    )
+    val transaction = Transaction(
+        id = 1,
+        name = "Makan Siang",
+        amount = 50000.0,
+        date = System.currentTimeMillis(),
+        description = "Makan bakso bersama teman",
+        categoryId = 1,
+        transactionType = "EXPENSE"
+    )
+    WletTheme {
+        EditDeleteSheetContent(
+            transaction = transaction,
+            categories = categories,
+            currencyCode = "IDR",
+            onClose = {},
+            onEdit = {},
+            onDelete = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddEditTransactionSheetContentPreview() {
+    val categories = listOf(
+        Category(id = 1, name = "Makanan", type = "EXPENSE"),
+        Category(id = 2, name = "Gaji", type = "INCOME"),
+        Category(id = 3, name = "Hiburan", type = "EXPENSE")
+    )
+    WletTheme {
+        AddEditTransactionSheetContent(
+            title = "Tambah Transaksi",
+            transaction = null,
+            categories = categories,
+            onSave = { _, _, _, _, _ -> }
+        )
+    }
+}
+

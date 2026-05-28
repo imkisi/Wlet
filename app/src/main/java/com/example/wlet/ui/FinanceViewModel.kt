@@ -1,5 +1,7 @@
 package com.example.wlet.ui
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -7,6 +9,7 @@ import com.example.wlet.data.SettingsManager
 import com.example.wlet.data.local.entities.Category
 import com.example.wlet.data.local.entities.Transaction
 import com.example.wlet.data.repository.FinanceRepository
+import com.example.wlet.ui.widget.updateWletWidget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,9 +20,10 @@ import kotlinx.coroutines.launch
  * Manages transactions, categories, and application settings.
  */
 class FinanceViewModel(
+    application: Application,
     private val repository: FinanceRepository,
     private val settingsManager: SettingsManager
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     val allTransactions: Flow<List<Transaction>> = repository.allTransactions
     val allCategories: Flow<List<Category>> = repository.allCategories
@@ -31,10 +35,20 @@ class FinanceViewModel(
     val language: StateFlow<String> = _language
 
     /**
+     * Helper to trigger Widget update
+     */
+    private fun triggerWidgetUpdate() {
+        viewModelScope.launch {
+            updateWletWidget(getApplication())
+        }
+    }
+
+    /**
      * Inserts a new transaction into the database.
      */
     fun insert(transaction: Transaction) = viewModelScope.launch {
         repository.addTransaction(transaction)
+        triggerWidgetUpdate()
     }
 
     /**
@@ -42,6 +56,7 @@ class FinanceViewModel(
      */
     fun update(transaction: Transaction) = viewModelScope.launch {
         repository.updateTransaction(transaction)
+        triggerWidgetUpdate()
     }
 
     /**
@@ -49,6 +64,7 @@ class FinanceViewModel(
      */
     fun delete(transaction: Transaction) = viewModelScope.launch {
         repository.deleteTransaction(transaction)
+        triggerWidgetUpdate()
     }
 
     /**
@@ -58,6 +74,7 @@ class FinanceViewModel(
         repository.deleteAllTransactions()
         settingsManager.currency = newCurrency
         _currency.value = newCurrency
+        triggerWidgetUpdate()
     }
 
     /**
@@ -73,6 +90,7 @@ class FinanceViewModel(
      */
     fun deleteAllTransactions() = viewModelScope.launch {
         repository.deleteAllTransactions()
+        triggerWidgetUpdate()
     }
 
     /**
@@ -99,13 +117,14 @@ class FinanceViewModel(
 }
 
 class FinanceViewModelFactory(
+    private val application: Application,
     private val repository: FinanceRepository,
     private val settingsManager: SettingsManager
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FinanceViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return FinanceViewModel(repository, settingsManager) as T
+            return FinanceViewModel(application, repository, settingsManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
