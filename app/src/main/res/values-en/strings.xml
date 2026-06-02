@@ -47,4 +47,9 @@
     <string name="confirm_and_delete">Reset and Continue</string>
     <string name="category_name">Category Name</string>
     <string name="today_spent">Today`s Expenses</string>
+    <string name="currency_idr">IDR - Indonesia (Rp)</string>
+    <string name="currency_usd">USD - United States ($)</string>
+    <string name="currency_eur">EUR - Europe (€)</string>
+    <string name="currency_jpy">JPY - Japan (¥)</string>
+    <string name="currency_gbp">GBP - United Kingdom (£)</string>
 </resources>

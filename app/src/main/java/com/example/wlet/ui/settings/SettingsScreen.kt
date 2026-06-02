@@ -139,10 +139,17 @@ fun SettingsScreenUI(
                     subtitle = languageDisplay,
                     onClick = { onSheetRequest(SettingsSheetType.LANGUAGE) }
                 )
+                val currencyDisplay = when (currentCurrency) {
+                    "USD" -> stringResource(R.string.currency_usd)
+                    "EUR" -> stringResource(R.string.currency_eur)
+                    "JPY" -> stringResource(R.string.currency_jpy)
+                    "GBP" -> stringResource(R.string.currency_gbp)
+                    else -> stringResource(R.string.currency_idr)
+                }
                 SettingsItem(
                     iconRes = R.drawable.currency,
                     title = stringResource(R.string.currency),
-                    subtitle = currentCurrency,
+                    subtitle = currencyDisplay,
                     onClick = { onSheetRequest(SettingsSheetType.CURRENCY) }
                 )
                 SettingsItem(
@@ -307,7 +314,13 @@ fun LanguageItem(label: String, selected: Boolean, onClick: () -> Unit) {
 @Composable
 fun CurrencyChangeSheetContent(currentCurrency: String, onConfirm: (String) -> Unit) {
     var selectedCurrency by remember { mutableStateOf(currentCurrency) }
-    val currencies = listOf("IDR - Indonesia (Rp)", "USD - United States ($)", "EUR - Europe (€)", "JPY - Japan (¥)", "GBP - United Kingdom (£)")
+    val currencies = listOf(
+        "IDR" to R.string.currency_idr,
+        "USD" to R.string.currency_usd,
+        "EUR" to R.string.currency_eur,
+        "JPY" to R.string.currency_jpy,
+        "GBP" to R.string.currency_gbp
+    )
 
     Column(modifier = Modifier
         .padding(horizontal = 24.dp, vertical = 16.dp)
@@ -343,7 +356,8 @@ fun CurrencyChangeSheetContent(currentCurrency: String, onConfirm: (String) -> U
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        currencies.forEach { currency ->
+        currencies.forEach { (code, resId) ->
+            val currencyLabel = stringResource(resId)
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -355,14 +369,14 @@ fun CurrencyChangeSheetContent(currentCurrency: String, onConfirm: (String) -> U
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { selectedCurrency = currency }
+                        .clickable { selectedCurrency = code }
                         .padding(vertical = 4.dp, horizontal = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = currency, modifier = Modifier.padding(start = 16.dp), fontFamily = RobotoMono)
+                    Text(text = currencyLabel, modifier = Modifier.padding(start = 16.dp), fontFamily = RobotoMono)
                     RadioButton(
-                        selected = selectedCurrency == currency,
-                        onClick = { selectedCurrency = currency },
+                        selected = selectedCurrency == code,
+                        onClick = { selectedCurrency = code },
                         colors = RadioButtonDefaults.colors(
                             selectedColor = Color.Blue,
                             unselectedColor = Color.Blue.copy(alpha = 0.8f))

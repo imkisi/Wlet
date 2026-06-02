@@ -47,4 +47,9 @@
     <string name="confirm_and_delete">Hapus dan Lanjutkan</string>
     <string name="category_name">Nama Kategori</string>
     <string name="today_spent">Pengeluaran hari ini</string>
+    <string name="currency_idr">IDR - Indonesia (Rp)</string>
+    <string name="currency_usd">USD - Amerika Serikat ($)</string>
+    <string name="currency_eur">EUR - Eropa (€)</string>
+    <string name="currency_jpy">JPY - Jepang (¥)</string>
+    <string name="currency_gbp">GBP - Inggris (£)</string>
 </resources>

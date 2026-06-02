@@ -11,8 +11,14 @@ class SettingsManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("wlet_settings", Context.MODE_PRIVATE)
 
     var currency: String
-        get() = prefs.getString("currency", "IDR") ?: "IDR"
-        set(value) = prefs.edit().putString("currency", value).apply()
+        get() {
+            val raw = prefs.getString("currency", "IDR") ?: "IDR"
+            return if (raw.contains(" - ")) raw.split(" - ")[0].trim() else raw
+        }
+        set(value) {
+            val cleanValue = if (value.contains(" - ")) value.split(" - ")[0].trim() else value
+            prefs.edit().putString("currency", cleanValue).apply()
+        }
 
     var language: String
         get() {
